@@ -120,3 +120,75 @@ def export_cmd(export_type: str, calibration: str, fmt: str, output: str) -> Non
         df.to_csv(out_path, index=False)
 
     click.echo(f"Exported to {out_path}")
+
+
+@cli.group()
+def calculator() -> None:
+    """Asset allocation calculator using precomputed lookup tables."""
+
+
+@calculator.command("precompute")
+@click.option("--output", "-o", type=click.Path(), default=None, help="Output JSON path.")
+def calculator_precompute(output: str | None) -> None:
+    """Precompute lookup tables for the calculator (takes several minutes)."""
+    from liquiditylife.calculator.tables import (
+        _DEFAULT_TABLES_PATH,
+        export_tables_json,
+        precompute_tables,
+    )
+
+    click.echo("Precomputing 9 scenario tables (this may take a while)...")
+    tables = precompute_tables()
+    out_path = Path(output) if output else _DEFAULT_TABLES_PATH
+    export_tables_json(tables, out_path)
+    click.echo(f"Saved {len(tables)} tables to {out_path}")
+
+
+@calculator.command("recommend")
+@click.option("--age", type=int, required=True, help="Current age.")
+@click.option("--income", type=float, required=True, help="Annual gross income ($).")
+@click.option("--savings", type=float, required=True, help="Total liquid savings ($).")
+@click.option("--expenses", type=float, required=True, help="Monthly fixed expenses ($).")
+@click.option("--risk", type=int, required=True, help="Risk tolerance (1-5).")
+def calculator_recommend(
+    age: int, income: float, savings: float, expenses: float, risk: int
+) -> None:
+    """Get an instant asset allocation recommendation."""
+    from liquiditylife.calculator.recommend import UserInputs, recommend
+
+    inputs = UserInputs(
+        age=age,
+        annual_income=income,
+        liquid_savings=savings,
+        monthly_fixed_expenses=expenses,
+        risk_tolerance=risk,
+    )
+    rec = recommend(inputs)
+
+    click.echo("")
+    click.echo("Recommended Asset Allocation")
+    click.echo("=" * 35)
+    click.echo(f"Stock share:     {rec.stock_share_pct:.0f}% of liquid wealth")
+    click.echo(f"Emergency fund:  {rec.emergency_fund_months} months of expenses "
+               f"(${expenses * rec.emergency_fund_months:,.0f})")
+    click.echo(f"Stocks:          ${rec.stocks_dollars:,.0f}")
+    click.echo(f"Safe assets:     ${rec.safe_dollars:,.0f}")
+    click.echo("")
+    click.echo(f"Based on: {rec.risk_level} risk tolerance, "
+               f"{rec.friction_level.replace('_', ' ')} "
+               f"({rec.expense_ratio:.0%} of income in fixed expenses)")
+    click.echo("")
+
+    if rec.trajectory:
+        click.echo("Trajectory:")
+        for pt in rec.trajectory:
+            click.echo(f"  Age {pt.age}:  {pt.stock_share_pct:.0f}% stocks "
+                       f"(${pt.stocks_dollars:,.0f})")
+        click.echo("")
+
+    extra_savings = savings * 0.5
+    click.echo(f"What if you saved ${extra_savings:,.0f} more?")
+    click.echo(f"  Stock share would rise to {rec.sensitivity_extra_savings:.0f}%")
+    click.echo("")
+    click.echo("Model: liquiditylife (Adams 2026)")
+    click.echo("Note: This is an approximation. Not financial advice.")
