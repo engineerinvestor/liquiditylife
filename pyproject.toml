@@ -1,0 +1,88 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "liquiditylife"
+version = "0.1.0"
+description = "Life-cycle portfolio choice with liquidity risk, labor-income risk, and consumption adjustment frictions"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{ name = "Engineer Investor", email = "egr.investor@gmail.com" }]
+keywords = [
+    "portfolio-choice",
+    "life-cycle",
+    "liquidity-risk",
+    "household-finance",
+    "dynamic-programming",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Typing :: Typed",
+]
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.11",
+    "pandas>=2.0",
+    "xarray>=2023.0",
+    "pydantic>=2.0,<3",
+    "matplotlib>=3.7",
+    "click>=8.0",
+]
+
+[project.optional-dependencies]
+viz = ["plotly", "streamlit", "panel"]
+fast = ["numba>=0.58"]
+dev = [
+    "pytest>=7",
+    "pytest-cov",
+    "mypy>=1.8",
+    "ruff>=0.3",
+    "mkdocs-material",
+    "mkdocstrings[python]",
+    "pre-commit",
+    "pandas-stubs",
+    "scipy-stubs",
+    "types-click",
+]
+
+[project.scripts]
+liquiditylife = "liquiditylife.cli.main:cli"
+
+[project.urls]
+Homepage = "https://github.com/engineerinvestor/liquiditylife"
+Documentation = "https://engineerinvestor.github.io/liquiditylife"
+Repository = "https://github.com/engineerinvestor/liquiditylife"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/liquiditylife"]
+
+[tool.mypy]
+strict = true
+plugins = ["pydantic.mypy"]
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.ruff]
+target-version = "py311"
+line-length = 99
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ANN", "RUF"]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["liquiditylife"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers"
+markers = ["slow: marks tests as slow (deselect with '-m \"not slow\"')"]

@@ -1,0 +1,32 @@
+site_name: liquiditylife
+site_description: Life-cycle portfolio choice with liquidity risk
+repo_url: https://github.com/engineerinvestor/liquiditylife
+
+theme:
+  name: material
+  palette:
+    primary: indigo
+
+nav:
+  - Home: index.md
+  - Model: model.md
+  - Calibrations: calibrations.md
+  - Numerics: numerics.md
+  - Visualization: viz.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [../src]
+
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
