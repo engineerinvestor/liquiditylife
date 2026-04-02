@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from liquiditylife._types import ArrayFloat
 
 try:
-    import numba  # type: ignore[import-untyped,import-not-found]
+    import numba  # type: ignore
 
     HAS_NUMBA = True
 except ImportError:
