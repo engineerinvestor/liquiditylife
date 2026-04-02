@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software in academic work, please cite it as below."
+title: "liquiditylife: Life-Cycle Portfolio Choice with Liquidity Risk"
+type: software
+authors:
+  - name: "Engineer Investor"
+version: 0.1.0
+date-released: "2026-04-02"
+url: "https://github.com/engineerinvestor/liquiditylife"
+license: MIT
+repository-code: "https://github.com/engineerinvestor/liquiditylife"
+keywords:
+  - portfolio-choice
+  - life-cycle
+  - liquidity-risk
+  - household-finance
+  - dynamic-programming
+references:
+  - type: article
+    authors:
+      - family-names: Adams
+        given-names: Patrick
+    title: "Stocks for the Long Run or Liquidity? Tax Data Evidence and Portfolio Choice Implications"
+    year: 2026
+    institution:
+      name: "MIT Sloan School of Management"
+    url: "https://patrick-adams.com/jmp"

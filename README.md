@@ -64,6 +64,19 @@ This package implements a model inspired by:
 > MIT Sloan School of Management, January 7, 2026.
 > [https://patrick-adams.com/jmp](https://patrick-adams.com/jmp)
 
+If you use `liquiditylife` in academic work, please cite the software as:
+
+```bibtex
+@software{liquiditylife,
+  author       = {Engineer Investor},
+  title        = {liquiditylife: Life-Cycle Portfolio Choice with Liquidity Risk},
+  year         = {2026},
+  url          = {https://github.com/engineerinvestor/liquiditylife},
+  version      = {0.1.0},
+  license      = {MIT}
+}
+```
+
 ## License
 
 MIT
