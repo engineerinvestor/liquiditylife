@@ -19,7 +19,7 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          paths: [../src]
+          paths: [src]
 
 markdown_extensions:
   - pymdownx.arithmatex:
