@@ -12,6 +12,7 @@ nav:
   - Model: model.md
   - Calibrations: calibrations.md
   - Numerics: numerics.md
+  - Calculator: calculator.md
   - Visualization: viz.md
 
 plugins:

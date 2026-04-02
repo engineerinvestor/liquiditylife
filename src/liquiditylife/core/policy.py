@@ -59,21 +59,21 @@ class PolicyFunction:
         if self._interp_c is None:
             msg = "Interpolator not set; call set_interpolators first"
             raise RuntimeError(msg)
-        return float(self._interp_c(np.array([[x_t, m_t, cm_t]])))
+        return float(self._interp_c(np.array([[x_t, m_t, cm_t]]))[0])
 
     def stock_share_at(self, x_t: float, m_t: float, cm_t: float) -> float:
         """Optimal stock share at (x_t, m_t, cm_t)."""
         if self._interp_theta is None:
             msg = "Interpolator not set; call set_interpolators first"
             raise RuntimeError(msg)
-        return float(self._interp_theta(np.array([[x_t, m_t, cm_t]])))
+        return float(self._interp_theta(np.array([[x_t, m_t, cm_t]]))[0])
 
     def value_at(self, x_t: float, m_t: float, cm_t: float) -> float:
         """Value function at (x_t, m_t, cm_t)."""
         if self._interp_v is None:
             msg = "Interpolator not set; call set_interpolators first"
             raise RuntimeError(msg)
-        return float(self._interp_v(np.array([[x_t, m_t, cm_t]])))
+        return float(self._interp_v(np.array([[x_t, m_t, cm_t]]))[0])
 
     @property
     def consumption_grid(self) -> ArrayFloat:

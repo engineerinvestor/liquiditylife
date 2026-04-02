@@ -97,12 +97,12 @@ def precompute_tables(
 
     config = SolverConfig(
         grid_spec=GridSpec(
-            x_points=5, m_points=15, cm_points=5,
+            x_points=3, m_points=10, cm_points=3,
             x_min=-0.02, x_max=0.12, m_max=30.0,
         ),
         quad_spec=QuadratureSpec(n_xi=3, n_ncf=3, n_eta=3, n_eps=3),
         n_c_grid=30,
-        n_theta_grid=11,
+        n_theta_grid=21,
         verbose=False,
     )
 
