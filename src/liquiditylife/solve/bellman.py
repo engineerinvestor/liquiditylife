@@ -53,13 +53,11 @@ def bellman_operator(
         Tuple of (value, consumption_policy, stock_share_policy) arrays,
         each of shape ``(n_x, n_m, n_cm)``.
     """
-    n_x = len(grid_x)
-    n_m = len(grid_m)
-    n_cm = len(grid_cm)
-
-    V = np.full((n_x, n_m, n_cm), -np.inf, dtype=np.float64)
-    C_pol = np.zeros((n_x, n_m, n_cm), dtype=np.float64)
-    theta_pol = np.zeros((n_x, n_m, n_cm), dtype=np.float64)
+    # Try Numba-accelerated path
+    from liquiditylife.solve.numba_kernels import (
+        HAS_NUMBA,
+        bellman_operator_numba_jit,
+    )
 
     prefs = cal.preferences
     adj = cal.adjustment_cost
@@ -70,6 +68,38 @@ def bellman_operator(
 
     is_terminal = age == lc.age_max
     is_next_retired = lc.is_retired(age + 1) if not is_terminal else False
+
+    if HAS_NUMBA and bellman_operator_numba_jit is not None:
+        # Extract V_next array for Numba (or zeros for terminal)
+        if v_next_interp is not None:
+            v_next_arr = np.asarray(v_next_interp.values, dtype=np.float64)
+        else:
+            v_next_arr = np.zeros(
+                (len(grid_x), len(grid_m), len(grid_cm)), dtype=np.float64
+            )
+
+        result: tuple[ArrayFloat, ArrayFloat, ArrayFloat] = bellman_operator_numba_jit(  # type: ignore[operator]
+            grid_x, grid_m, grid_cm, v_next_arr,
+            shock_grid.xi, shock_grid.ncf, shock_grid.ndr,
+            shock_grid.eta, shock_grid.eps, shock_grid.weights,
+            prefs.gamma, prefs.beta, prefs.psi,
+            ar.rf, ar.x_bar, ar.phi_x,
+            adj.phi_c,
+            illiq.disposable_share, illiq.S,
+            ip.age_drift(age),
+            is_terminal, is_next_retired,
+            n_c_grid, n_theta_grid,
+        )
+        return result
+
+    # Python fallback path
+    n_x = len(grid_x)
+    n_m = len(grid_m)
+    n_cm = len(grid_cm)
+
+    V = np.full((n_x, n_m, n_cm), -np.inf, dtype=np.float64)
+    C_pol = np.zeros((n_x, n_m, n_cm), dtype=np.float64)
+    theta_pol = np.zeros((n_x, n_m, n_cm), dtype=np.float64)
 
     # Stock share grid
     theta_grid = np.linspace(0.0, 1.0, n_theta_grid, dtype=np.float64)
