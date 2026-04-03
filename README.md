@@ -2,9 +2,10 @@
 
 An open-source Python package for **liquidity-aware life-cycle portfolio choice**, built for interactive exploration of portfolio choice under labor-income risk and consumption rigidity.
 
+[![PyPI](https://img.shields.io/pypi/v/liquiditylife)](https://pypi.org/project/liquiditylife/)
 [![CI](https://github.com/engineerinvestor/liquiditylife/actions/workflows/ci.yml/badge.svg)](https://github.com/engineerinvestor/liquiditylife/actions/workflows/ci.yml)
 [![Docs](https://github.com/engineerinvestor/liquiditylife/actions/workflows/docs.yml/badge.svg)](https://engineerinvestor.github.io/liquiditylife/)
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://github.com/engineerinvestor/liquiditylife)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://pypi.org/project/liquiditylife/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
