@@ -8,10 +8,12 @@ import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 
 from liquiditylife.calibrations.bundles import CalibrationBundle
+from liquiditylife.core.preferences import Preferences
 from liquiditylife.model.budget import (
     end_of_period_savings,
 )
 from liquiditylife.model.utility import ez_utility, terminal_utility
+from liquiditylife.processes.adjustment_cost import AdjustmentCostModel
 from liquiditylife.processes.asset_returns import AssetReturnProcess
 from liquiditylife.processes.illiquid import IlliquidWealthRule
 from liquiditylife.processes.income import IncomeProcess
@@ -130,7 +132,7 @@ def bellman_operator(
                     continue
 
                 c_max = c_max_raw
-                c_grid = np.linspace(c_min, c_max, n_c_grid, dtype=np.float64)
+                c_grid = np.geomspace(c_min, c_max, n_c_grid, dtype=np.float64)
 
                 best_v = -np.inf
                 best_c = c_min
@@ -170,7 +172,24 @@ def bellman_operator(
                             best_c = float(c_t)
                             best_theta = float(theta)
 
+                # Golden-section refinement
                 if best_v > -np.inf:
+                    c_spacing = (c_max_raw - c_min) / max(n_c_grid - 1, 1)
+                    best_c, best_v = _refine_golden(
+                        best_c, c_spacing, c_min, c_max_raw,
+                        best_theta, x_t, m_t, cm_t,
+                        prefs, adj, ar, ip, illiq, age,
+                        v_next_interp, shock_grid,  # type: ignore[arg-type]
+                        is_next_retired, is_consumption=True,
+                    )
+                    th_spacing = 1.0 / max(n_theta_grid - 1, 1)
+                    best_theta, best_v = _refine_golden(
+                        best_theta, th_spacing, 0.0, 1.0,
+                        best_c, x_t, m_t, cm_t,
+                        prefs, adj, ar, ip, illiq, age,
+                        v_next_interp, shock_grid,  # type: ignore[arg-type]
+                        is_next_retired, is_consumption=False,
+                    )
                     V[ix, im, icm] = best_v
                     C_pol[ix, im, icm] = best_c
                     theta_pol[ix, im, icm] = best_theta
@@ -180,6 +199,97 @@ def bellman_operator(
                     theta_pol[ix, im, icm] = 0.0
 
     return V, C_pol, theta_pol
+
+
+def _eval_python(
+    c_val: float,
+    theta_val: float,
+    x_t: float,
+    m_t: float,
+    cm_t: float,
+    prefs: Preferences,
+    adj: AdjustmentCostModel,
+    ar: AssetReturnProcess,
+    ip: IncomeProcess,
+    illiq: IlliquidWealthRule,
+    age: int,
+    v_next_interp: RegularGridInterpolator,
+    shock_grid: ShockGrid,
+    is_next_retired: bool,
+) -> float:
+    """Evaluate Bellman objective at a single (c, theta) pair (Python path)."""
+    savings = end_of_period_savings(m_t, c_val, cm_t, adj)
+    if savings < _SAVINGS_FLOOR:
+        return -np.inf
+    ev = _compute_expected_value(
+        x_t=x_t, savings=savings, theta=theta_val, c_t=c_val,
+        age=age, gamma=prefs.gamma, v_next_interp=v_next_interp,
+        shock_grid=shock_grid, ar=ar, ip=ip, illiq=illiq,
+        is_next_retired=is_next_retired,
+    )
+    if ev <= 0:
+        return -np.inf
+    return ez_utility(c_val, ev, prefs)
+
+
+def _refine_golden(
+    best_val: float,
+    spacing: float,
+    lo_bound: float,
+    hi_bound: float,
+    other_val: float,
+    x_t: float,
+    m_t: float,
+    cm_t: float,
+    prefs: Preferences,
+    adj: AdjustmentCostModel,
+    ar: AssetReturnProcess,
+    ip: IncomeProcess,
+    illiq: IlliquidWealthRule,
+    age: int,
+    v_next_interp: RegularGridInterpolator,
+    shock_grid: ShockGrid,
+    is_next_retired: bool,
+    *,
+    is_consumption: bool,
+) -> tuple[float, float]:
+    """Golden-section refinement around the grid-search optimum."""
+    gr = 0.6180339887498949
+    a = max(lo_bound, best_val - spacing)
+    b = min(hi_bound, best_val + spacing)
+
+    def obj(v: float) -> float:
+        if is_consumption:
+            return _eval_python(
+                v, other_val, x_t, m_t, cm_t,
+                prefs, adj, ar, ip, illiq, age,
+                v_next_interp, shock_grid, is_next_retired,
+            )
+        return _eval_python(
+            other_val, v, x_t, m_t, cm_t,
+            prefs, adj, ar, ip, illiq, age,
+            v_next_interp, shock_grid, is_next_retired,
+        )
+
+    c1 = b - gr * (b - a)
+    c2 = a + gr * (b - a)
+    v1 = obj(c1)
+    v2 = obj(c2)
+    for _ in range(20):
+        if v1 < v2:
+            a = c1
+            c1, v1 = c2, v2
+            c2 = a + gr * (b - a)
+            v2 = obj(c2)
+        else:
+            b = c2
+            c2, v2 = c1, v1
+            c1 = b - gr * (b - a)
+            v1 = obj(c1)
+
+    mid = (a + b) / 2.0
+    v_mid = obj(mid)
+    return mid, v_mid
 
 
 def _compute_expected_value(
